@@ -1,4 +1,5 @@
 
+import { Link, useOutletContext } from "react-router-dom";
 import {
   CheckCircle2,
   Clock,
@@ -7,122 +8,216 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 
 function DashboardPage() {
+  // Get the shared tasks from App.jsx
+  const { tasks } = useOutletContext();
+
+  // Calculate task statistics
+  const totalTasks = tasks.length;
+
+  const completedTasks = tasks.filter(
+    (task) => task.completed
+  ).length;
+
+  const pendingTasks = tasks.filter(
+    (task) => !task.completed
+  ).length;
+
+  const progress =
+    totalTasks === 0
+      ? 0
+      : Math.round((completedTasks / totalTasks) * 100);
+
+  // Get the next three pending tasks
+  const upcomingTasks = [...tasks]
+    .filter((task) => !task.completed)
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+    .slice(0, 3);
+
   return (
     <div>
-
       <PageHeader
-        eyebrow="Your workspace"
+        eyebrow="YOUR STUDY OVERVIEW"
         title="Welcome to StudyFlow"
-        description="A fresh day to learn, grow and make progress."
+        description="Stay organised, manage your tasks, and make progress with your studies."
       />
 
       {/* Summary cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-        <div className="surface-card p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div className="w-11 h-11 bg-teal-light text-teal rounded-xl flex items-center justify-center">
-              <ListTodo size={23} />
-            </div>
-            <span className="text-xs text-muted">Your plans</span>
+        <div className="surface-card p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">Total Tasks</p>
+            <ListTodo className="text-teal-600" size={22} />
           </div>
 
-          <p className="text-3xl font-bold text-ink">06</p>
-          <p className="text-sm text-muted mt-1">Total study tasks</p>
+          <h2 className="mt-3 text-3xl font-bold text-[#172D3B]">
+            {totalTasks}
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            All your study tasks
+          </p>
         </div>
 
-        <div className="surface-card p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div className="w-11 h-11 bg-teal-light text-teal rounded-xl flex items-center justify-center">
-              <CheckCircle2 size={23} />
-            </div>
-            <span className="text-xs text-muted">Well done!</span>
+        <div className="surface-card p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">Completed</p>
+            <CheckCircle2 className="text-green-600" size={22} />
           </div>
 
-          <p className="text-3xl font-bold text-ink">02</p>
-          <p className="text-sm text-muted mt-1">Completed tasks</p>
+          <h2 className="mt-3 text-3xl font-bold text-[#172D3B]">
+            {completedTasks}
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Tasks finished
+          </p>
         </div>
 
-        <div className="surface-card p-6 sm:col-span-2 xl:col-span-1">
-          <div className="flex items-center justify-between mb-5">
-            <div className="w-11 h-11 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center">
-              <Clock size={23} />
-            </div>
-            <span className="text-xs text-muted">Keep going</span>
+        <div className="surface-card p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">Pending</p>
+            <Clock className="text-orange-500" size={22} />
           </div>
 
-          <p className="text-3xl font-bold text-ink">04</p>
-          <p className="text-sm text-muted mt-1">Pending tasks</p>
+          <h2 className="mt-3 text-3xl font-bold text-[#172D3B]">
+            {pendingTasks}
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Tasks still to do
+          </p>
         </div>
 
-      </section>
+        <div className="surface-card p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">Progress</p>
+            <TrendingUp className="text-teal-600" size={22} />
+          </div>
 
-      {/* Welcome card */}
-      <section className="surface-card p-6 md:p-8 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <h2 className="mt-3 text-3xl font-bold text-[#172D3B]">
+            {progress}%
+          </h2>
 
+          <p className="mt-1 text-sm text-gray-500">
+            Overall completion
+          </p>
+        </div>
+
+      </div>
+
+      {/* Progress section */}
+      <div className="surface-card mt-6 p-6">
+        <div className="flex items-center justify-between">
           <div>
-            <p className="text-teal font-semibold text-sm mb-2">
-              YOUR NEXT STEP
-            </p>
-
-            <h2 className="text-2xl font-bold text-ink mb-2">
-              Make today count.
+            <h2 className="text-lg font-semibold text-[#172D3B]">
+              Your Study Progress
             </h2>
 
-            <p className="text-muted text-sm max-w-lg">
-              Organise your study activities and focus on
-              what matters most. Every completed task
-              brings you closer to your goals.
+            <p className="mt-1 text-sm text-gray-500">
+              Keep going! Every completed task counts.
+            </p>
+          </div>
+
+          <span className="font-semibold text-teal-700">
+            {progress}%
+          </span>
+        </div>
+
+        <div className="mt-5 h-3 overflow-hidden rounded-full bg-gray-100">
+          <div
+            className="h-full rounded-full bg-[#168C83] transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <p className="mt-3 text-sm text-gray-500">
+          {completedTasks} of {totalTasks} tasks completed
+        </p>
+      </div>
+
+      {/* Upcoming tasks */}
+      <div className="surface-card mt-6 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-[#172D3B]">
+              Upcoming Tasks
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Your next study activities
             </p>
           </div>
 
           <Link
             to="/tasks"
-            className="primary-button shrink-0"
+            className="flex items-center gap-2 text-sm font-semibold text-teal-700 hover:text-teal-900"
           >
-            View my tasks
-            <ArrowRight size={18} />
+            View all
+            <ArrowRight size={16} />
           </Link>
-
         </div>
-      </section>
 
-      {/* Progress card */}
-      <section className="surface-card p-6">
-        <div className="flex items-center gap-3 mb-5">
-          <TrendingUp className="text-teal" size={23} />
+        <div className="mt-5 space-y-3">
+          {upcomingTasks.length > 0 ? (
+            upcomingTasks.map((task) => (
+              <div
+                key={task.id}
+                className="flex flex-col justify-between gap-3 rounded-xl border border-gray-100 p-4 sm:flex-row sm:items-center"
+              >
+                <div>
+                  <h3 className="font-medium text-[#172D3B]">
+                    {task.title}
+                  </h3>
 
-          <div>
-            <h2 className="font-bold text-ink">
-              Your study journey
-            </h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {task.category} · Due {task.dueDate}
+                  </p>
+                </div>
 
-            <p className="text-xs text-muted">
-              A little progress every day.
+                <span
+                  className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
+                    task.priority === "High"
+                      ? "bg-red-50 text-red-600"
+                      : task.priority === "Medium"
+                      ? "bg-orange-50 text-orange-600"
+                      : "bg-green-50 text-green-600"
+                  }`}
+                >
+                  {task.priority} Priority
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="py-6 text-center text-sm text-gray-500">
+              No pending tasks. Great work!
             </p>
-          </div>
+          )}
+        </div>
+      </div>
+
+      {/* Quick action */}
+      <div className="mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl bg-[#172D3B] p-6 text-white sm:flex-row sm:items-center">
+        <div>
+          <h2 className="text-lg font-semibold">
+            Ready for your next task?
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-300">
+            Visit your task list and organise your study schedule.
+          </p>
         </div>
 
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-muted">
-            Weekly progress
-          </span>
-
-          <span className="text-sm font-bold text-teal">
-            33%
-          </span>
-        </div>
-
-        <div className="w-full h-3 bg-teal-light rounded-full overflow-hidden">
-          <div className="w-1/3 h-full bg-teal rounded-full" />
-        </div>
-      </section>
-
+        <Link
+          to="/tasks"
+          className="rounded-lg bg-[#168C83] px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-700"
+        >
+          Manage Tasks
+        </Link>
+      </div>
     </div>
   );
 }
