@@ -1,19 +1,33 @@
 
+import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import {
   ListTodo,
-  CalendarDays,
-  CheckCircle2,
   Clock,
+  CheckCircle2,
+  Plus,
 } from "lucide-react";
 
 import PageHeader from "../components/PageHeader";
+import TaskForm from "../components/TaskForm";
+import TaskCard from "../components/TaskCard";
+
+const emptyForm = {
+  title: "",
+  category: "Programming",
+  dueDate: "",
+  priority: "Medium",
+};
 
 function TasksPage() {
-  // Get the shared tasks from App.jsx
-  const { tasks } = useOutletContext();
+  const { tasks, setTasks } = useOutletContext();
 
-  // Separate completed and pending tasks
+  const [showForm, setShowForm] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [formData, setFormData] = useState(emptyForm);
+  const [error, setError] = useState("");
+
+  // Calculate task statistics
   const completedTasks = tasks.filter(
     (task) => task.completed
   );
@@ -21,6 +35,97 @@ function TasksPage() {
   const pendingTasks = tasks.filter(
     (task) => !task.completed
   );
+
+  // Reset the form
+  function resetForm() {
+    setFormData(emptyForm);
+    setEditingTask(null);
+    setError("");
+    setShowForm(false);
+  }
+
+  // Add a new task or update an existing task
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    if (!formData.title.trim()) {
+      setError("Please enter a task title.");
+      return;
+    }
+
+    if (editingTask) {
+      setTasks((previousTasks) =>
+        previousTasks.map((task) =>
+          task.id === editingTask.id
+            ? {
+                ...task,
+                ...formData,
+                title: formData.title.trim(),
+              }
+            : task
+        )
+      );
+    } else {
+      const newTask = {
+        id: crypto.randomUUID(),
+        ...formData,
+        title: formData.title.trim(),
+        completed: false,
+      };
+
+      setTasks((previousTasks) => [
+        ...previousTasks,
+        newTask,
+      ]);
+    }
+
+    resetForm();
+  }
+
+  // Prepare a task for editing
+  function handleEdit(task) {
+    setEditingTask(task);
+
+    setFormData({
+      title: task.title,
+      category: task.category,
+      dueDate: task.dueDate,
+      priority: task.priority,
+    });
+
+    setError("");
+    setShowForm(true);
+  }
+
+  // Delete a task
+  function handleDelete(taskId) {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this task?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setTasks((previousTasks) =>
+      previousTasks.filter((task) => task.id !== taskId)
+    );
+
+    if (editingTask?.id === taskId) {
+      resetForm();
+    }
+  }
+
+  // Mark a task complete or incomplete
+  function handleToggle(taskId) {
+    setTasks((previousTasks) =>
+      previousTasks.map((task) =>
+        task.id === taskId
+          ? { ...task, completed: !task.completed }
+          : task
+      )
+    );
+  }
 
   return (
     <div>
@@ -32,11 +137,8 @@ function TasksPage() {
 
       {/* Task summary */}
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-
         <div className="surface-card flex items-center gap-4 p-5">
-          <div className="rounded-xl bg-teal-50 p-3">
-            <ListTodo className="text-teal-700" size={22} />
-          </div>
+          <ListTodo className="text-teal-700" size={24} />
 
           <div>
             <p className="text-sm text-gray-500">Total Tasks</p>
@@ -47,9 +149,7 @@ function TasksPage() {
         </div>
 
         <div className="surface-card flex items-center gap-4 p-5">
-          <div className="rounded-xl bg-orange-50 p-3">
-            <Clock className="text-orange-600" size={22} />
-          </div>
+          <Clock className="text-orange-600" size={24} />
 
           <div>
             <p className="text-sm text-gray-500">Pending</p>
@@ -60,9 +160,7 @@ function TasksPage() {
         </div>
 
         <div className="surface-card flex items-center gap-4 p-5">
-          <div className="rounded-xl bg-green-50 p-3">
-            <CheckCircle2 className="text-green-600" size={22} />
-          </div>
+          <CheckCircle2 className="text-green-600" size={24} />
 
           <div>
             <p className="text-sm text-gray-500">Completed</p>
@@ -71,27 +169,51 @@ function TasksPage() {
             </h2>
           </div>
         </div>
-
       </div>
+
+      {/* Add task button */}
+      <div className="mt-6 flex justify-end">
+        <button
+          type="button"
+          onClick={() => {
+            setEditingTask(null);
+            setFormData(emptyForm);
+            setError("");
+            setShowForm(!showForm);
+          }}
+          className="flex items-center gap-2 rounded-lg bg-[#168C83] px-5 py-3 font-semibold text-white hover:bg-teal-700"
+        >
+          <Plus size={18} />
+          Add New Task
+        </button>
+      </div>
+
+      {/* Task form */}
+      {showForm && (
+        <div className="surface-card mt-5 p-6">
+          <h2 className="mb-5 text-lg font-semibold text-[#172D3B]">
+            {editingTask ? "Edit Task" : "Create a New Task"}
+          </h2>
+
+          <TaskForm
+            formData={formData}
+            setFormData={setFormData}
+            onSubmit={handleSubmit}
+            onCancel={resetForm}
+            isEditing={Boolean(editingTask)}
+            error={error}
+          />
+        </div>
+      )}
 
       {/* Task list */}
       <div className="surface-card mt-6 p-6">
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-[#172D3B]">
-              All Study Tasks
-            </h2>
-
-            <p className="mt-1 text-sm text-gray-500">
-              Your current study schedule
-            </p>
-          </div>
-
-          <CalendarDays className="text-teal-700" size={22} />
-        </div>
+        <h2 className="mb-5 text-lg font-semibold text-[#172D3B]">
+          All Study Tasks
+        </h2>
 
         {tasks.length === 0 ? (
-          <div className="py-12 text-center">
+          <div className="py-10 text-center">
             <ListTodo
               size={40}
               className="mx-auto text-gray-300"
@@ -102,70 +224,19 @@ function TasksPage() {
             </h3>
 
             <p className="mt-2 text-sm text-gray-500">
-              Your study tasks will appear here when you add them.
+              Click Add New Task to create your first study task.
             </p>
           </div>
         ) : (
           <div className="space-y-3">
             {tasks.map((task) => (
-              <div
+              <TaskCard
                 key={task.id}
-                className="flex flex-col justify-between gap-3 rounded-xl border border-gray-100 p-4 sm:flex-row sm:items-center"
-              >
-                <div className="flex items-start gap-3">
-                  {task.completed ? (
-                    <CheckCircle2
-                      size={21}
-                      className="mt-1 shrink-0 text-green-600"
-                    />
-                  ) : (
-                    <Clock
-                      size={21}
-                      className="mt-1 shrink-0 text-orange-500"
-                    />
-                  )}
-
-                  <div>
-                    <h3
-                      className={`font-semibold ${
-                        task.completed
-                          ? "text-gray-400 line-through"
-                          : "text-[#172D3B]"
-                      }`}
-                    >
-                      {task.title}
-                    </h3>
-
-                    <p className="mt-1 text-sm text-gray-500">
-                      {task.category} · Due {task.dueDate}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      task.priority === "High"
-                        ? "bg-red-50 text-red-600"
-                        : task.priority === "Medium"
-                        ? "bg-orange-50 text-orange-600"
-                        : "bg-green-50 text-green-600"
-                    }`}
-                  >
-                    {task.priority}
-                  </span>
-
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      task.completed
-                        ? "bg-green-50 text-green-700"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {task.completed ? "Completed" : "Pending"}
-                  </span>
-                </div>
-              </div>
+                task={task}
+                onToggle={handleToggle}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             ))}
           </div>
         )}
